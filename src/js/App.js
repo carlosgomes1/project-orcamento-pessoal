@@ -55,10 +55,58 @@ class Bd {
                 continue
             }
 
+            despesa.id = i
             despesas.push(despesa)
         }
 
         return despesas
+    }
+
+    pesquisar( despesa ) {
+        let despesasFiltradass = []
+
+        let despesasFiltradas = this.recuperarTodosRegistros()
+
+        // ano
+        if( despesa.ano != '' ) {
+            despesasFiltradass = despesasFiltradas.filter( (d) => d.ano == despesa.ano )
+        }
+
+        // mes
+
+        if( despesa.mes != '' ) {
+            despesasFiltradass = despesasFiltradas.filter( (d) => d.mes == despesa.mes )
+        }
+
+        // dia
+
+        if( despesa.dia != '' ) {
+            despesasFiltradass = despesasFiltradas.filter( (d) => d.dia == despesa.dia )
+        }
+
+        // tipo
+
+        if( despesa.tipo != '' ) {
+            despesasFiltradass = despesasFiltradas.filter( (d) => d.tipo == despesa.tipo )
+        }
+
+        // descrição
+
+        if( despesa.descricao != '' ) {
+            despesasFiltradass = despesasFiltradas.filter( (d) => d.descricao == despesa.descricao )
+        }
+
+        // valor
+
+        if( despesa.valor != '' ) {
+            despesasFiltradass = despesasFiltradas.filter( (d) => d.valor == despesa.valor )
+        }
+
+        return despesasFiltradass
+    }
+
+    remover(id) {
+        localStorage.removeItem(id)
     }
 }
 
@@ -107,21 +155,30 @@ function cadastrarDespesa() {
 
 }
 
-function carregaListaDespesa() {
-    let despesas = []
+function carregaListaDespesa(despesas = [], filtro = false) {
 
-    despesas = bd.recuperarTodosRegistros()
-    
+    if( despesas.length == 0 && filtro == true ) {
+        document.getElementById('modalHeader').setAttribute('class', 'modal-header text-danger')
+        document.getElementById('textModalTitle').innerHTML = 'Erro ao buscar dados'
+        document.getElementById('modalBody').innerHTML = 'Não conseguimos encontrar dados com esses filtros, a lista inteira foi retornada'
+        document.getElementById('botaoModal').setAttribute('class', 'btn btn-danger')
+        document.getElementById('botaoModal').innerHTML = 'Voltar'
+        $('#modalError').modal('show')
+    }
+
+    if(despesas.length == 0) {
+        despesas = bd.recuperarTodosRegistros()
+    }
+
     let tabela = document.getElementById('tabela')
+
+    tabela.innerHTML = ''
 
     despesas.forEach((d) => {
         let data = `${ d.dia } / ${ d.mes } / ${ d.ano }`
 
-        console.log(d, d.tipo)
-
         let linha = tabela.insertRow()
         
-
         switch(parseInt(d.tipo)) {
             case 1:
                 d.tipo = 'Alimentação'
@@ -144,6 +201,39 @@ function carregaListaDespesa() {
         linha.insertCell(1).innerHTML = d.tipo
         linha.insertCell(2).innerHTML = d.descricao
         linha.insertCell(3).innerHTML = `R$${ parseFloat(d.valor).toFixed(2) }`
+
+        // botao de exclusão
+
+        let btn = document.createElement('button')
+        btn.setAttribute('class', 'btn btn-danger')
+        btn.innerHTML = '<i class="fas fa-times"></i>'
+        btn.id = 'id-despesa-' + d.id
+        btn.onclick = () => {
+            let id = btn.id.replace('id-despesa-', '')
+            bd.remover(id)
+
+            window.location.reload()
+        }
+        linha.insertCell(4).append(btn)
+
+        console.log(d)
     })
+
+}
+
+function pesquisarDespesa() {
+    let ano = document.getElementById('ano').value
+    let mes = document.getElementById('mes').value
+    let dia = document.getElementById('dia').value
+    let tipo = document.getElementById('tipo').value
+    let descricao = document.getElementById('descricao').value
+    let valor = document.getElementById('valor').value
+
+    let despesa = new Despesa(ano, mes, dia, tipo, descricao, valor)
+
+    let despesas = bd.pesquisar(despesa)
+
+    carregaListaDespesa(despesas, true)
+    console.log(despesas)
 
 }
